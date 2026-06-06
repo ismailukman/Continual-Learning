@@ -24,13 +24,25 @@ wheels/
 .ipynb_checkpoints
 *.ipynb_checkpoints/
 
+# Notebooks kept local only (folder preserved as empty placeholder)
+notebooks/*
+!notebooks/.gitkeep
+
+# Old plain-text reports kept local only (folder preserved empty)
+report/legacy/*
+!report/legacy/.gitkeep
+
+# Claude / local agent files
+.claude/
+
 # PyTorch
 *.pth
 *.pt
 *.onnx
 
-# Data
-data/
+# Data (folder preserved as empty placeholder)
+data/*
+!data/.gitkeep
 dataset/
 *.dcm
 *.npy
@@ -41,8 +53,18 @@ outputs/
 checkpoints/
 figures/
 results/
-logs/
 predictions/
+
+# Logs (folder preserved as empty placeholder)
+logs/*
+!logs/.gitkeep
+
+# ...but keep the report's committed figures and build artifacts
+!report/figures/
+!report/figures/**
+report/*.aux
+report/*.log
+report/*.out
 
 # IDE
 .vscode/

@@ -1,377 +1,102 @@
-# RSNA Continual Learning with Medical Images
+# RSNA Continual Learning
 
-Continual learning implementation for RSNA medical images demonstrating catastrophic forgetting and mitigation methods. Ready for Kaggle with preprocessed dataset.
+Continual-learning experiments on the RSNA 2023 Abdominal Trauma Detection
+dataset. We compare **Baseline (fine-tuning)**, **EWC**, **Experience Replay**,
+and **EWC + Replay** on a small CNN, and report average accuracy and forgetting.
 
-## 🎯 Overview
-
-This project demonstrates continual learning on medical images using the RSNA 2023 Abdominal Trauma dataset. It implements four methods:
-
-- **Baseline**: Naive fine-tuning (demonstrates catastrophic forgetting)
-- **EWC**: Elastic Weight Consolidation (parameter regularization)
-- **Experience Replay**: Rehearsal-based approach
-- **EWC + Replay**: Combined method (best performance)
-
-## 📁 Project Structure
+## Repository layout
 
 ```
-MedContinualLearning/
-├── rsna_continual_learning_kaggle.ipynb   # Main Kaggle-ready notebook
-├── quickstart.py                          # CLI interface
-├── config.py                              # Configuration
-├── utils.py                               # Utility functions
-├── requirements.txt                       # Dependencies
-└── outputs/                               # Auto-created outputs
+.
+├── src/                       # experiment code
+│   ├── exp_class_incremental.py   # Exp 1: 2-task class-incremental (headline)
+│   ├── exp_window_3task_v2.py     # Exp 2: 3-task window domain-incremental
+│   ├── exp_window_3task_v3.py     # later window variant (near-chance, kept for ref)
+│   ├── exp_improved.py            # mods 1-6 (ResNet-18, λ-sweep, balanced replay,
+│   │                              #   herding, LwF, patient agg.) — 2-task, diagnostic
+│   ├── exp_improved_v2.py         # 3-window full fine-tune (slice-level; near-chance)
+│   ├── exp_mil.py                 # patient-level attention-MIL (best CL result)
+│   ├── tune_mil.py                # validation-AUC hyperparameter sweep for exp_mil
+│   ├── config.py                  # central experiment configuration + presets
+│   ├── utils.py                   # helpers
+│   └── quickstart.py              # scaffold (does not load data)
+├── notebooks/                 # interactive walkthroughs (local only; empty on GitHub)
+├── report/                    # publication-ready report
+│   ├── continual_learning_report.tex
+│   ├── continual_learning_report.pdf
+│   ├── make_figures.py            # regenerates figures/ from recorded results
+│   ├── figures/                   # committed vector figures (PDF)
+│   └── legacy/                    # earlier plain-text reports (local only)
+├── logs/                      # run logs / CSVs / matrices (local only; empty on GitHub)
+└── data/                      # dataset (local only; empty on GitHub)
 ```
 
-## 🚀 Quick Start (Kaggle)
+> **What is on GitHub:** only source code (`src/`, `report/make_figures.py`,
+> the LaTeX report and its compiled PDF) and the report's output figures.
+> The `data/`, `logs/`, `notebooks/`, and `report/legacy/` folders are kept as
+> empty placeholders — their contents are produced or stored locally and are
+> intentionally not pushed. Recreate the figures from recorded results with
+> `python report/make_figures.py`.
 
-### 1. Install Dependencies
+## Data layout
 
-```python
-!pip install kagglehub torch torchvision tqdm matplotlib seaborn scikit-learn opencv-python
-```
-
-### 2. Download Dataset
-
-```python
-import kagglehub
-
-path = kagglehub.dataset_download(
-    "ashery/rsna-2023-abdominal-trauma-processed-dataset"
-)
-print(f"Dataset path: {path}")
-```
-
-### 3. Run Notebook
-
-Open `rsna_continual_learning_kaggle.ipynb` and run all cells. The dataset is already preprocessed as PNGs.
-
-## 💻 Local Setup
-
-### Installation
-
-```bash
-# Clone/download repository
-cd MedContinualLearning
-
-# Install dependencies
-pip install -r requirements.txt
-```
-
-### Using Kaggle Dataset Locally
-
-```python
-from utils import resolve_data_root
-
-data_root = resolve_data_root(
-    kaggle_dataset="ashery/rsna-2023-abdominal-trauma-processed-dataset"
-)
-```
-
-### Using Local Dataset
-
-```python
-data_root = "/path/to/your/dataset"
-```
-
-Expected structure:
-```
-dataset_root/
-├── train/
-│   ├── class_0/
-│   │   ├── image1.png
-│   │   └── ...
-│   └── class_1/
-│       └── ...
-└── test/
-    ├── class_0/
-    └── class_1/
-```
-
-### CLI Usage
-
-```bash
-# Using Kaggle dataset
-python quickstart.py \
-    --kaggle_dataset ashery/rsna-2023-abdominal-trauma-processed-dataset \
-    --method ewc \
-    --preset debug
-
-# Using local data
-python quickstart.py \
-    --data_root /path/to/data \
-    --method replay \
-    --iters 1000
-```
-
-## 📊 Methods Explained
-
-### Baseline (Naive Fine-tuning)
-Sequential training without forgetting prevention.
-- **Forgetting**: 20-40% accuracy drop
-- **Memory**: None
-- **Use**: Baseline comparison
-
-### EWC (Elastic Weight Consolidation)
-Protects important parameters using Fisher Information Matrix.
-
-**Formula**: Loss = Task Loss + (λ/2) Σ F_i(θ_i - θ_i*)²
-
-- **Forgetting**: 5-15%
-- **Memory**: Low (only Fisher matrix)
-- **Hyperparameter**: λ = 5000 (regularization strength)
-
-### Experience Replay
-Stores representative samples from previous tasks.
-- **Forgetting**: 2-10%
-- **Memory**: Buffer (50 samples/class default)
-- **Privacy**: Stores raw data
-
-### EWC + Replay (Combined)
-Combines both approaches for best results.
-- **Forgetting**: 0-5%
-- **Memory**: Buffer + Fisher matrix
-- **Performance**: Best overall
-
-## ⚙️ Configuration
-
-Edit `config.py` or pass command-line arguments:
-
-### Key Parameters
-
-```python
-# Data
-DATA_CONFIG['kaggle_dataset'] = "ashery/rsna-2023-abdominal-trauma-processed-dataset"
-DATA_CONFIG['file_extension'] = 'png'
-DATA_CONFIG['target_size'] = (256, 256)
-
-# Training
-TRAINING_CONFIG['learning_rate'] = 0.001
-TRAINING_CONFIG['batch_size'] = 16
-TRAINING_CONFIG['iters_per_task'] = 500
-
-# Continual Learning
-CONTINUAL_LEARNING_CONFIG['num_tasks'] = 2
-CONTINUAL_LEARNING_CONFIG['ewc']['lambda'] = 5000.0
-CONTINUAL_LEARNING_CONFIG['replay']['buffer_size_per_class'] = 50
-```
-
-### Presets
-
-```python
-from config import get_config
-
-# Fast debugging (50 iters, small buffer)
-config = get_config(preset='debug')
-
-# High quality (2000 iters, large buffer)
-config = get_config(preset='highquality')
-
-# Memory efficient (small batch, small buffer)
-config = get_config(preset='memory_efficient')
-```
-
-## 📈 Expected Results
-
-| Method | Avg Accuracy | Forgetting |
-|--------|--------------|------------|
-| Baseline | 60-70% | 25-35% |
-| EWC | 75-85% | 8-15% |
-| Replay | 80-90% | 3-8% |
-| EWC+Replay | 85-95% | 0-5% |
-
-## 🔧 Hyperparameter Tuning
-
-### EWC Lambda
+Expected on disk under `data/`:
 
 ```
-Too low (<100):      Still significant forgetting
-Recommended (5000):  Good balance
-Too high (>50000):   Poor new task learning
+data/
+  RSNA2023ProcessedImages/<patient_id>/<series_id>/<instance>.png
+  train.csv               # labels; uses the `any_injury` column
+  image_level_labels.csv
 ```
 
-Search: [100, 500, 1000, 5000, 10000]
+## Running the experiments
 
-### Buffer Size
+```powershell
+conda activate medical_ml
 
-```
-Too small (<10):     Limited protection
-Recommended (50):    Good balance
-Too large (>500):    High memory, slow
-```
+# Smoke test (limits patients/images/iterations)
+$env:DEBUG_RUN = "1"; python src/exp_class_incremental.py
 
-Adjust based on dataset size and available memory.
-
-## 📝 Key Metrics
-
-### Average Accuracy
-Mean accuracy across all tasks after training: `(1/T) Σ A_T,t`
-
-### Forgetting
-Average drop in accuracy on previous tasks: `(1/T-1) Σ (max A_i,t - A_T,t)`
-
-### Forward Transfer
-Zero-shot performance on future tasks (positive = good generalization)
-
-### Backward Transfer
-Effect of new tasks on old tasks (negative = forgetting)
-
-## 🔬 Research Quality Features
-
-✅ Reproducible (fixed random seeds)
-✅ Proper evaluation metrics
-✅ Multiple baselines
-✅ Comprehensive documentation
-✅ Modular and extensible
-✅ Visualization tools
-
-## 🐛 Troubleshooting
-
-### CUDA Out of Memory
-
-```python
-# Reduce batch size
-config['training']['batch_size'] = 8
-
-# Or use CPU
-config['training']['device'] = 'cpu'
+# Full run
+Remove-Item Env:DEBUG_RUN -ErrorAction SilentlyContinue
+python src/exp_class_incremental.py
 ```
 
-### Dataset Not Found
+Window-based variants: `python src/exp_window_3task_v2.py`.
 
-```python
-# Verify path
-import os
-print(os.listdir(data_root))
+### Improved experiment (next iteration)
 
-# Check structure
-print(os.listdir(os.path.join(data_root, 'train')))
+`src/exp_improved.py` implements the six modifications derived from the report
+analysis: (1) pretrained ResNet-18 backbone, (2) EWC λ sweep
+{10, 50, 100, 500, 1000}, (3) balanced replay loss, (4) larger buffer + herding
+exemplar selection, (5) LwF knowledge distillation, (6) patient/series-level
+label aggregation. It is self-contained (no full-run side effects on import).
+
+```powershell
+$env:DEBUG_RUN = "1"; python src/exp_improved.py     # fast smoke test (verified)
+Remove-Item Env:DEBUG_RUN; python src/exp_improved.py # full run (multi-hour, GPU)
 ```
 
-### Slow Training
+## Building the report
 
-```python
-# Use GPU
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-# Increase num_workers (local only, not Kaggle)
-DataLoader(dataset, num_workers=4)
+```powershell
+conda activate medical_ml
+python report/make_figures.py            # regenerate figures from results
+cd report; tectonic continual_learning_report.tex
 ```
 
-## 📚 References
+The PDF summarises the two most informative experiments, the mathematical
+formulation of each method/metric, the results, and the prioritised next
+modifications.
 
-### Continual Learning
+## Key result (class-incremental)
 
-1. **EWC**: Kirkpatrick et al. (2017). "Overcoming catastrophic forgetting in neural networks." PNAS.
-   - Introduces Fisher Information-based parameter protection
+| Method      | Avg accuracy | Forgetting |
+|-------------|:------------:|:----------:|
+| Baseline    | 50.00%       | 100.00%    |
+| EWC         | 50.00%       | 100.00%    |
+| Replay      | 54.38%       | 86.75%     |
+| EWC+Replay  | 50.75%       | **29.50%** |
 
-2. **Online EWC**: Schwarz et al. (2018). "Progress & Compress: A scalable framework for continual learning." ICML.
-   - Improves EWC with running averages
-
-3. **Survey**: van de Ven & Tolias (2019). "Three scenarios for continual learning." arXiv:1904.07734.
-   - Comprehensive overview of continual learning approaches
-
-### Medical Imaging
-
-4. **RSNA Dataset**: RSNA 2023 Abdominal Trauma Detection
-   - Preprocessed CT images for trauma detection
-
-## 🎓 Learning Resources
-
-### Understanding the Code
-
-1. **Start here**: Open `rsna_continual_learning_kaggle.ipynb`
-2. **Run experiments**: Execute cells sequentially
-3. **Modify hyperparameters**: Edit Section 9
-4. **Visualize results**: See Section 11
-
-### Extending the Project
-
-```python
-# Add new CL method
-def train_with_new_method(model, dataset, ...):
-    # Your implementation
-    pass
-
-# Add to experiments
-model_new = MedicalImageClassifier(...)
-train_with_new_method(model_new, ...)
-```
-
-### Custom Datasets
-
-```python
-# Modify load_rsna_data() function
-def load_custom_data(data_root):
-    # Load your image paths and labels
-    return train_paths, train_labels, test_paths, test_labels
-```
-
-## 🤝 Contributing
-
-Improvements welcome! Focus areas:
-- Additional continual learning methods (LwF, iCaRL, PackNet)
-- Better memory selection strategies
-- Advanced architectures (ResNet, EfficientNet)
-- Multi-task evaluation metrics
-
-## 📄 License
-
-MIT License - Feel free to use for research and education.
-
-## 📧 Contact
-
-For questions or issues:
-- Check code comments in notebook
-- Review configuration in `config.py`
-- Inspect utilities in `utils.py`
-
-## 🎯 Quick Reference
-
-### Import from Utils
-
-```python
-from utils import (
-    set_seed,                  # Reproducibility
-    resolve_data_root,         # Kaggle/local data
-    save_checkpoint,           # Model saving
-    ExperimentLogger,          # Logging
-    calculate_metrics,         # CL metrics
-    get_device                 # GPU/CPU
-)
-```
-
-### Load Configuration
-
-```python
-from config import get_config, print_config
-
-config = get_config(preset='debug')
-print_config(config)
-```
-
-### Run Experiment
-
-```python
-# In notebook
-1. Set DATA_ROOT to dataset path
-2. Run all cells in order
-3. View results in Section 11
-
-# CLI
-python quickstart.py --kaggle_dataset <dataset-id> --method ewc
-```
-
-## ✨ Key Features
-
-- 🎯 **Kaggle-Ready**: Works out-of-box with kagglehub
-- 📊 **Four Methods**: Baseline, EWC, Replay, Combined
-- 🔬 **Research-Quality**: Proper metrics and evaluation
-- 📈 **Visualizations**: Accuracy plots, forgetting matrices
-- ⚙️ **Configurable**: Easy hyperparameter tuning
-- 📝 **Well-Documented**: Inline comments and explanations
-- 🚀 **Fast**: Optimized for quick experiments
-
----
-
-**Ready to run?** Open `rsna_continual_learning_kaggle.ipynb` and start experimenting! 🚀
+See [`report/continual_learning_report.pdf`](report/continual_learning_report.pdf)
+for full analysis.
