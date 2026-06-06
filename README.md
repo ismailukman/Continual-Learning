@@ -1,8 +1,19 @@
 # RSNA Continual Learning
 
+![Python](https://img.shields.io/badge/Python-3.10-blue?logo=python&logoColor=white)
+![PyTorch](https://img.shields.io/badge/PyTorch-2.x-EE4C2C?logo=pytorch&logoColor=white)
+![Domain](https://img.shields.io/badge/Domain-Medical%20Imaging-009E73)
+![Topic](https://img.shields.io/badge/Topic-Continual%20Learning-CC79A7)
+![Methods](https://img.shields.io/badge/Methods-EWC%20%7C%20Replay%20%7C%20LwF%20%7C%20MIL-0072B2)
+![License](https://img.shields.io/badge/License-MIT-lightgrey)
+
 Continual-learning experiments on the RSNA 2023 Abdominal Trauma Detection
 dataset. We compare **Baseline (fine-tuning)**, **EWC**, **Experience Replay**,
 and **EWC + Replay** on a small CNN, and report average accuracy and forgetting.
+
+**Tags:** `continual-learning` · `catastrophic-forgetting` · `ewc` ·
+`experience-replay` · `learning-without-forgetting` · `multiple-instance-learning` ·
+`medical-imaging` · `ct` · `rsna` · `pytorch`
 
 ## Repository layout
 
