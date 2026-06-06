@@ -21,22 +21,18 @@ and **EWC + Replay** on a small CNN, and report average accuracy and forgetting.
 │   ├── utils.py                   # helpers
 │   └── quickstart.py              # scaffold (does not load data)
 ├── notebooks/                 # interactive walkthroughs (local only; empty on GitHub)
-├── report/                    # publication-ready report
-│   ├── continual_learning_report.tex
-│   ├── continual_learning_report.pdf
-│   ├── make_figures.py            # regenerates figures/ from recorded results
-│   ├── figures/                   # committed vector figures (PDF)
-│   └── legacy/                    # earlier plain-text reports (local only)
+├── report/                    # report
+│   ├── figures/                   # committed vector figures (PDF) — the only tracked report files
+│   └── legacy/                    # earlier plain-text reports (local only; empty on GitHub)
 ├── logs/                      # run logs / CSVs / matrices (local only; empty on GitHub)
 └── data/                      # dataset (local only; empty on GitHub)
 ```
 
-> **What is on GitHub:** only source code (`src/`, `report/make_figures.py`,
-> the LaTeX report and its compiled PDF) and the report's output figures.
-> The `data/`, `logs/`, `notebooks/`, and `report/legacy/` folders are kept as
-> empty placeholders — their contents are produced or stored locally and are
-> intentionally not pushed. Recreate the figures from recorded results with
-> `python report/make_figures.py`.
+> **What is on GitHub:** the source code under `src/` and the report's output
+> figures under `report/figures/`. Everything else — the dataset, run logs, the
+> notebooks, and the report's LaTeX source / compiled PDF / figure-generation
+> script — is kept locally and not pushed; `data/`, `logs/`, `notebooks/`, and
+> `report/legacy/` appear as empty placeholders.
 
 ## Data layout
 
@@ -76,27 +72,3 @@ label aggregation. It is self-contained (no full-run side effects on import).
 $env:DEBUG_RUN = "1"; python src/exp_improved.py     # fast smoke test (verified)
 Remove-Item Env:DEBUG_RUN; python src/exp_improved.py # full run (multi-hour, GPU)
 ```
-
-## Building the report
-
-```powershell
-conda activate medical_ml
-python report/make_figures.py            # regenerate figures from results
-cd report; tectonic continual_learning_report.tex
-```
-
-The PDF summarises the two most informative experiments, the mathematical
-formulation of each method/metric, the results, and the prioritised next
-modifications.
-
-## Key result (class-incremental)
-
-| Method      | Avg accuracy | Forgetting |
-|-------------|:------------:|:----------:|
-| Baseline    | 50.00%       | 100.00%    |
-| EWC         | 50.00%       | 100.00%    |
-| Replay      | 54.38%       | 86.75%     |
-| EWC+Replay  | 50.75%       | **29.50%** |
-
-See [`report/continual_learning_report.pdf`](report/continual_learning_report.pdf)
-for full analysis.

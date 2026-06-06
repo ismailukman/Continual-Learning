@@ -59,12 +59,14 @@ predictions/
 logs/*
 !logs/.gitkeep
 
-# ...but keep the report's committed figures and build artifacts
+# Report: only the output figures are tracked. The LaTeX source, compiled PDF,
+# and figure-generation script are kept local only.
+report/*
 !report/figures/
 !report/figures/**
-report/*.aux
-report/*.log
-report/*.out
+!report/legacy/
+report/legacy/*
+!report/legacy/.gitkeep
 
 # IDE
 .vscode/
