@@ -39,12 +39,6 @@ and **EWC + Replay** on a small CNN, and report average accuracy and forgetting.
 └── data/                      # dataset (local only; empty on GitHub)
 ```
 
-> **What is on GitHub:** the source code under `src/` and the report's output
-> figures under `report/figures/`. Everything else — the dataset, run logs, the
-> notebooks, and the report's LaTeX source / compiled PDF / figure-generation
-> script — is kept locally and not pushed; `data/`, `logs/`, `notebooks/`, and
-> `report/legacy/` appear as empty placeholders.
-
 ## Data layout
 
 Expected on disk under `data/`:
